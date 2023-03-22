@@ -6,16 +6,20 @@ package com.spring;
 
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SleepApplicationContext {
 
     private  ConcurrentHashMap<String,Object> singletonObjects = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String,BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
-
+    private List<BeanPostProcessor> beanPostProcessorList = new ArrayList<>();
 
     private Class configClass;
 
@@ -26,7 +30,7 @@ public class SleepApplicationContext {
             String beanName = entry.getKey();
             BeanDefinition beanDefinition = entry.getValue();
             if (beanDefinition.getScope().equals("singleton")){
-                Object bean = createBean(beanDefinition);
+                Object bean = createBean(beanDefinition,beanName);
                 singletonObjects.put(beanName,bean);
             }
         }
@@ -62,7 +66,11 @@ public class SleepApplicationContext {
                             //解析类-->BeanDefinition
                             //判断当前bean是单例bean还是原型bean(prototype)
                             //BeanDefinition
-                            if (clazz.isAnnotationPresent(Component.class)) {
+                            // 判断类是不是实现接口
+                            if (BeanPostProcessor.class.isAssignableFrom(clazz)){
+                                BeanPostProcessor o = (BeanPostProcessor)clazz.getDeclaredConstructor().newInstance();
+                                beanPostProcessorList.add(o);
+                            }
                                 Component componentAnnotation = clazz.getDeclaredAnnotation(Component.class);
                                 String baenName = componentAnnotation.value();
                                 BeanDefinition beanDefinition = new BeanDefinition();
@@ -74,10 +82,16 @@ public class SleepApplicationContext {
                                     beanDefinition.setScope("singleton");
                                 }
                                 beanDefinitionMap.put(baenName, beanDefinition);
-
-                            }
                         }
                     } catch (ClassNotFoundException e) {
+                        throw new RuntimeException(e);
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    } catch (InstantiationException e) {
+                        throw new RuntimeException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    } catch (NoSuchMethodException e) {
                         throw new RuntimeException(e);
                     }
                 }
@@ -91,10 +105,13 @@ public class SleepApplicationContext {
             BeanDefinition beanDefinition = beanDefinitionMap.get(beanName);
             if (beanDefinition.getScope().equals("singleton")){
                 Object o = singletonObjects.get(beanName);
+                if (Objects.isNull(o)){
+                    return createBean(beanDefinition,beanName);
+                }
                 return o;
             }else {
                 //创建bean对象
-               return createBean(beanDefinition);
+               return createBean(beanDefinition,beanName);
 
             }
 
@@ -103,10 +120,36 @@ public class SleepApplicationContext {
             throw new NullPointerException();
         }
     }
-    public Object createBean(BeanDefinition beanDefinition){
+    public Object createBean(BeanDefinition beanDefinition,String beanName){
         Class clazz = beanDefinition.getClazz();
         try {
-            Object o = clazz.getDeclaredConstructor().newInstance();
+            Object instance = clazz.getDeclaredConstructor().newInstance();
+            //依赖注入
+            for (Field declaredField : clazz.getDeclaredFields()) {
+                if (declaredField.isAnnotationPresent(Autowired.class)){
+                    Object bean = getBean(declaredField.getName());
+                    declaredField.setAccessible(true);
+                    declaredField.set(instance, bean);
+                }
+            }
+            //P7.Aware回调
+            if (instance instanceof BeanNameAware){
+                ((BeanNameAware)instance).setBeanName(beanName);
+            }
+            // 初始化后
+            //可以增加数字排序
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
+                instance = beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
+            }
+            // 初始化
+            if (instance instanceof InitializingBean){
+                ((InitializingBean)instance).afterPropertiesSet();
+            }
+            //初始化前
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
+                instance = beanPostProcessor.postProcessAfterInitialization(instance,beanName);
+            }
+            return instance;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
@@ -115,8 +158,9 @@ public class SleepApplicationContext {
             throw new RuntimeException(e);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return new Object();
     }
 }
 

@@ -1,9 +1,26 @@
 package com.sleep.service;
 
-import com.spring.Component;
-import com.spring.Scope;
+import com.spring.*;
 
 @Component("userService")
-@Scope("prototype")
-public class UserService {
+public class UserService implements BeanNameAware, InitializingBean,UserInterface {
+    @Autowired
+    private OrderService orderService;
+    private String beanName;
+
+    @Override
+    public void setBeanName(String beanName) {
+        this.beanName =beanName;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println("初始化");
+    }
+
+    @Override
+    public void test(){
+        System.out.println(orderService);
+    }
+
 }
