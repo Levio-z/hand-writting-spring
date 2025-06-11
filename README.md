@@ -1,7 +1,9 @@
 # Handwritten Spring Framework
 
 A simple handwritten Dependency Injection (DI) framework that mimics Spring, designed to help understand the underlying principles of Spring.
+
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Levio-z/hand-writting-spring)
+
 This handwritten Spring framework implements several classic design patterns. Based on code analysis, the following design patterns are mainly used:
 
 Factory Pattern
