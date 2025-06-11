@@ -1,10 +1,5 @@
 package com.spring;
 
-
-
-
-
-
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -17,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class SleepApplicationContext {
 
-    private  ConcurrentHashMap<String,Object> singletonObjects = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String,Object> singletonObjects = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String,BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
     private List<BeanPostProcessor> beanPostProcessorList = new ArrayList<>();
 
@@ -26,7 +21,7 @@ public class SleepApplicationContext {
     public SleepApplicationContext (Class configClass){
         this.configClass = configClass;
         scan(configClass);
-        for (Map.Entry<String,BeanDefinition>  entry: beanDefinitionMap.entrySet()) {
+        for (Map.Entry<String,BeanDefinition> entry: beanDefinitionMap.entrySet()) {
             String beanName = entry.getKey();
             BeanDefinition beanDefinition = entry.getValue();
             if (beanDefinition.getScope().equals("singleton")){
@@ -38,16 +33,17 @@ public class SleepApplicationContext {
     }
 
     private void scan(Class configClass) {
-        //解析配置类
-        //解析这个注解-->扫描路径-->然后去扫描@ComponetScan("com.sleep.service")
+        // Log the start of component scanning process
+        System.out.println("========= Starting component scan ================");        // Parse configuration class
+        // Parse this annotation --> scan path --> then scan @ComponentScan("com.sleep.service")
         ComponetScan componetScanAnnotation = (ComponetScan) configClass.getDeclaredAnnotation(ComponetScan.class);
         String path = componetScanAnnotation.value();
         System.out.println("path:"+path);
-        // 扫描
-        // 1.根据扫描路径包名得到所有的类
-        // 2.Bootstrap-->jre/lib
-        // 3.Ext-->jre/extt/lib
-        // 4.App-->classpath
+        // Scanning
+        // 1. Get all classes based on the package name of the scan path
+        // 2. Bootstrap --> jre/lib
+        // 3. Ext --> jre/ext/lib
+        // 4. App --> classpath
         ClassLoader classLoader = SleepApplicationContext.class.getClassLoader();
         URL resource = classLoader.getResource(path);
         File file = new File(resource.getFile());
@@ -62,11 +58,11 @@ public class SleepApplicationContext {
                     try {
                         Class<?> clazz = classLoader.loadClass(replace);
                         if (clazz.isAnnotationPresent(Component.class)) {
-                            //生成bean对象
-                            //解析类-->BeanDefinition
-                            //判断当前bean是单例bean还是原型bean(prototype)
-                            //BeanDefinition
-                            // 判断类是不是实现接口
+                            // Generate bean object
+                            // Parse class --> BeanDefinition
+                            // Determine if the current bean is a singleton or prototype
+                            // BeanDefinition
+                            // Determine if the class implements an interface
                             if (BeanPostProcessor.class.isAssignableFrom(clazz)){
                                 BeanPostProcessor o = (BeanPostProcessor)clazz.getDeclaredConstructor().newInstance();
                                 beanPostProcessorList.add(o);
@@ -97,7 +93,7 @@ public class SleepApplicationContext {
                 }
 
             }
-        }
+            System.out.println("========= Scan completed ================"+"\r\n");        }
     }
 
     public Object getBean(String beanName){
@@ -110,21 +106,21 @@ public class SleepApplicationContext {
                 }
                 return o;
             }else {
-                //创建bean对象
+                // Create bean object
                return createBean(beanDefinition,beanName);
 
             }
 
         }else {
-            //不存在对应的bean
+            // No corresponding bean exists
             throw new NullPointerException();
         }
     }
     public Object createBean(BeanDefinition beanDefinition,String beanName){
-        Class clazz = beanDefinition.getClazz();
+        System.out.println("========= Starting bean creation ================" + beanName);        Class clazz = beanDefinition.getClazz();
         try {
             Object instance = clazz.getDeclaredConstructor().newInstance();
-            //依赖注入
+            // Dependency injection
             for (Field declaredField : clazz.getDeclaredFields()) {
                 if (declaredField.isAnnotationPresent(Autowired.class)){
                     Object bean = getBean(declaredField.getName());
@@ -132,23 +128,24 @@ public class SleepApplicationContext {
                     declaredField.set(instance, bean);
                 }
             }
-            //P7.Aware回调
+            // P7. Aware callback
             if (instance instanceof BeanNameAware){
                 ((BeanNameAware)instance).setBeanName(beanName);
             }
-            // 初始化后
-            //可以增加数字排序
+            // After initialization
+            // Can add numerical sorting
             for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
                 instance = beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
             }
-            // 初始化
+            // Initialization
             if (instance instanceof InitializingBean){
                 ((InitializingBean)instance).afterPropertiesSet();
             }
-            //初始化前
+            // Before initialization
             for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
                 instance = beanPostProcessor.postProcessAfterInitialization(instance,beanName);
             }
+            System.out.println("=========Bean creation completed================" + beanName+"\r\n");
             return instance;
         } catch (InstantiationException e) {
             throw new RuntimeException(e);

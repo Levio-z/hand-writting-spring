@@ -15,7 +15,7 @@ public class UserService implements BeanNameAware, InitializingBean,UserInterfac
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        System.out.println("初始化");
+        System.out.println("Initialization");
     }
 
     @Override
