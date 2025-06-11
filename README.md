@@ -1,0 +1,1 @@
+A simple handwritten Dependency Injection (DI) framework that mimics Spring, designed to help understand the underlying principles of Spring.

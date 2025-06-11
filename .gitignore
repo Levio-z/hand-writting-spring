@@ -1,0 +1,90 @@
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Auto-save files
+*.shelf/
+
+# IntelliJ local history
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/vcs.xml
+.idea/**/deployment.xml
+
+# IntelliJ run configs (optional)
+.idea/**/runConfigurations/
+
+### Java ###
+*.class
+*.jar
+*.war
+*.ear
+
+### Gradle ###
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.gradle-cache/
+**/out/
+
+# Local Gradle tasks and logs
+.gradle/
+build/
+logs/
+!**/src/**/build/
+
+# Gradle daemon and caches
+.gradle/
+gradle-app.setting
+gradle.properties
+**/build/
+
+# Wrapper logs
+gradlew.bat
+gradlew
+gradle-wrapper.jar
+gradle-wrapper.properties
+
+### Maven ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+### Spring Boot ###
+# Spring Boot dev tools
+.spring-boot-devtools.properties
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Logs ###
+*.log
+logs/
+*.log.*
+
+### Environment files ###
+.env
+*.env
+
+### Tooling ###
+.vscode/
+*.sw?
+*.bak
+*.tmp
+*~
+
+### Test Reports ###
+test-output/
+surefire-reports/
+jacoco.exec
+*.exec
+
